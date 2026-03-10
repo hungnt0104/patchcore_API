@@ -1,0 +1,18 @@
+# ── Core API ────────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9       # required for File upload
+
+# ── ML / Anomaly Detection ───────────────────────────────────────────────────
+anomalib>=2.0.0               # anomalib v2.x (latest)
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ── Image processing ────────────────────────────────────────────────────────
+Pillow>=10.0.0
+opencv-python-headless>=4.8.0 # headless — no GUI, safe for servers
+numpy>=1.24.0
+matplotlib>=3.7.0
+
+# ── Utilities ───────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0          # load .env config nếu cần
