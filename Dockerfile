@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # ── Copy app code ───────────────────────────────────────────
 COPY app/ ./app/
+COPY handler.py ./handler.py
 
 # ── Copy model weights ─────────────────────────────────────
 # Đảm bảo file .ckpt có mặt trước khi build image
@@ -31,9 +32,9 @@ COPY results/ ./results/
 EXPOSE 8000
 
 # ── Run ─────────────────────────────────────────────────────
-# --workers 1 vì PatchCore giữ VRAM — chạy multi-worker cần
-# refactor sang shared memory / model pool.
-CMD ["uvicorn", "app.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "1"]
+# RunPod Serverless: chạy handler.py
+CMD ["python", "handler.py"]
+
+# Để test local với FastAPI, dùng lệnh:
+# docker run -p 8000:8000 patchcore-api python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+
