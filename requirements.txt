@@ -3,6 +3,7 @@ fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 python-multipart>=0.0.9       # required for File upload
 runpod>=1.6.0                 # RunPod Serverless SDK
+huggingface_hub>=0.22.0       # download model.ckpt từ HF Hub
 
 # ── ML / Anomaly Detection ───────────────────────────────────────────────────
 anomalib>=2.0.0               # anomalib v2.x (latest)

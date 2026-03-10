@@ -52,18 +52,52 @@ if not hasattr(_anomalib_mod, "TaskType"):
         _anomalib_mod.TaskType = TaskType
 
 # ── Config ───────────────────────────────────────────────────────────────── #
-CHECKPOINT_PATH = Path("results/Patchcore/MVTecAD/bottle/latest/weights/lightning/model.ckpt")
-IMAGE_SIZE = (256, 256)
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# ⚠️  Sau khi chạy upload_model.py, thay REPO_ID bằng repo của bạn
+HF_REPO_ID  = "hungnt0104/patchcore"   # ← thay username/repo đúng của bạn
+HF_FILENAME = "model.ckpt"
+
+# File cache tại /tmp để tái dùng giữa các warm invocation
+CACHE_PATH  = Path("/tmp/patchcore_model.ckpt")
+IMAGE_SIZE  = (256, 256)
+DEVICE      = "cuda" if torch.cuda.is_available() else "cpu"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def ensure_model_downloaded() -> Path:
+    """Download model từ HuggingFace Hub nếu chưa có trong cache."""
+    if CACHE_PATH.exists() and CACHE_PATH.stat().st_size > 1_000_000:
+        # File > 1MB → là model thật, không phải LFS pointer
+        logger.info("✅ Model cache found at %s", CACHE_PATH)
+        return CACHE_PATH
+
+    logger.info("⬇️  Downloading model from HuggingFace Hub: %s …", HF_REPO_ID)
+    t0 = time.time()
+    try:
+        from huggingface_hub import hf_hub_download
+        downloaded = hf_hub_download(
+            repo_id=HF_REPO_ID,
+            filename=HF_FILENAME,
+            local_dir="/tmp",
+            local_dir_use_symlinks=False,
+        )
+        # Copy sang CACHE_PATH chuẩn
+        import shutil
+        shutil.copy(downloaded, CACHE_PATH)
+        logger.info("✅ Download done in %.1f s → %s", time.time() - t0, CACHE_PATH)
+    except Exception as e:
+        logger.error("❌ Download failed: %s", e)
+        raise
+    return CACHE_PATH
+
 
 # ── Load model (1 lần khi container khởi động) ───────────────────────────── #
 logger.info("Loading PatchCore model …")
 t0 = time.time()
 from anomalib.models import Patchcore
-_model = Patchcore.load_from_checkpoint(str(CHECKPOINT_PATH))
+ckpt = ensure_model_downloaded()
+_model = Patchcore.load_from_checkpoint(str(ckpt))
 _model.eval()
 _model.to(DEVICE)
 logger.info("Model ready in %.1f s (device=%s)", time.time() - t0, DEVICE)
